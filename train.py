@@ -2,13 +2,19 @@ import pandas as pd
 import joblib
 from sklearn.ensemble import RandomForestClassifier
 
-# Load dataset
+# -----------------------------
+# 1. Load dataset
+# -----------------------------
 df = pd.read_csv("bodyPerformance.csv")
 
-# Rename columns if needed
-df = df.rename(columns={"body fat_%": "body_fat_pct"})
+# rename columns if needed
+df = df.rename(columns={
+    "body fat_%": "body_fat_pct"
+})
 
-# Features
+# -----------------------------
+# 2. Define features and target
+# -----------------------------
 feature_cols = [
     "age", "gender", "height_cm", "weight_kg",
     "body_fat_pct", "diastolic", "systolic", "gripForce"
@@ -17,23 +23,27 @@ feature_cols = [
 X = df[feature_cols].copy()
 y = df["class"]
 
-# One-hot encode gender
+# one-hot encode gender
 X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
-# Train model (smaller to shrink file)
+# -----------------------------
+# 3. Train smaller Random Forest
+# -----------------------------
 model = RandomForestClassifier(
-    n_estimators=80,  # fewer trees
-    max_depth=8,      # shallower
+    n_estimators=80,   # smaller model
+    max_depth=8,       # shallower trees
+    min_samples_leaf=5, 
     random_state=42
 )
 model.fit(X, y)
 
-# Save bundle with columns
+# -----------------------------
+# 4. Save model + columns bundle
+# -----------------------------
 bundle = {
     "model": model,
     "columns": list(X.columns)
 }
 
 joblib.dump(bundle, "fitness_classifier_compact.pkl", compress=3)
-
-print("✅ Model retrained & saved in current sklearn version")
+print("✅ Model retrained & saved as fitness_classifier_compact.pkl")
