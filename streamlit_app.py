@@ -1,72 +1,70 @@
 import joblib
 import streamlit as st
-import numpy as np
 import pandas as pd
 
-## Load trained model
-model = joblib.load("hdb_dt_model.pkl")
+# Load trained model
+model = joblib.load("fitness_classifier.pkl")
 
-## Streamlit app
-st.title("HDB Resale Price Prediction")
+st.title("Gym Member Fitness Level Prediction")
 
-## Define the input options
-towns = ['Bedok', 'Punggol', 'Tampines']
-flat_types = ['2 ROOM', '3 ROOM', '4 ROOM', '5 ROOM']
-storey_ranges = ['01 TO 03', '04 TO 06', '07 TO 09']
+st.write("Predict fitness level (A–D) based on body measurements and exercise performance")
 
+# User inputs
+age = st.slider("Age", 10, 90, 25)
 
-## User inputs
-town_selected = st.selectbox("Select Town", towns)
-flat_type_selected = st.selectbox("Select Flat Type", flat_types)
-storey_range_selected = st.selectbox("Select Storey", storey_ranges)
-floor_area_selected = st.slider("Select Floor Area (sqm)", 
-                                min_value=30, 
-                                max_value=200, 
-                                value=70)
+gender = st.selectbox("Gender", ["M", "F"])
 
-## Predict button
-if st.button("Predict HDB price"):
+height_cm = st.slider("Height (cm)", 130, 210, 170)
+weight_kg = st.slider("Weight (kg)", 30, 160, 70)
+bodyfat = st.slider("Body Fat %", 1.0, 50.0, 18.0)
 
-    ## Create dict for input features
-    input_data = {
-        'town': town_selected,
-        'flat_type': flat_type_selected,
-        'storey_range': storey_range_selected,
-        'floor_area': floor_area_selected
-    }
+diastolic = st.slider("Diastolic BP", 40, 120, 80)
+systolic = st.slider("Systolic BP", 80, 200, 120)
 
-    ## Convert input data to a DataFrame
+grip = st.slider("Grip Force", 5, 70, 35)
+sitbend = st.slider("Sit & Bend Forward (cm)", -30, 30, 5)
+situps = st.slider("Sit Ups (count)", 0, 80, 30)
+broadjump = st.slider("Broad Jump (cm)", 50, 300, 160)
+
+if st.button("Predict Fitness Class"):
+
+    # Create dataframe for input
     df_input = pd.DataFrame({
-        'town': [town_selected],
-        'flat_type': [flat_type_selected],
-        'storey_range': [storey_range_selected],
-        'floor_area': [floor_area_selected]
+        "age": [age],
+        "gender": [gender],
+        "height_cm": [height_cm],
+        "weight_kg": [weight_kg],
+        "body fat_%": [bodyfat],
+        "diastolic": [diastolic],
+        "systolic": [systolic],
+        "gripForce": [grip],
+        "sit_and_bend_forward": [sitbend],
+        "sit_ups": [situps],
+        "broad_jump": [broadjump]
     })
 
-    ## One-hot encoding
-    df_input = pd.get_dummies(df_input, 
-                              columns = ['town', 'flat_type', 'storey_range']
-                             )
-    
-    # df_input = df_input.to_numpy()
+    # One-hot encode gender
+    df_input = pd.get_dummies(df_input, columns=["gender"])
 
-    df_input = df_input.reindex(columns = model.feature_names_in_,
-                                fill_value=0)
+    # Align with model training features
+    df_input = df_input.reindex(
+        columns=model.feature_names_in_,
+        fill_value=0
+    )
 
+    # Predict
+    pred_class = model.predict(df_input)[0]
 
+    st.success(f"Predicted Fitness Level: **{pred_class}**")
 
-    ## Predict
-    y_unseen_pred = model.predict(df_input)[0]
-    st.success(f"Predicted Resale Price: ${y_unseen_pred:,.2f}")
-
-## Page design
+# Optional background design
 st.markdown(
-    f"""
+    """
     <style>
-    .stApp {{
-        background: url("https://www.shutterstock.com/shutterstock/videos/1025418011/thumb/1.jpg");
-        background-size: cover
-    }}
+    .stApp {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+    }
     </style>
     """,
     unsafe_allow_html=True
