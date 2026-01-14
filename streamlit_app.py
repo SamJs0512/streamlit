@@ -3,7 +3,8 @@ import streamlit as st
 import pandas as pd
 
 # Load trained model
-model = joblib.load("bodyPerformance.csv")
+model = joblib.load("fitness_classifier.pkl")
+
 
 st.title("Gym Member Fitness Level Prediction")
 
