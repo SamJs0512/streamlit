@@ -3,7 +3,7 @@ import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
-df = pd.read_csv("/mnt/data/bodyPerformance.csv")
+df = pd.read_csv("/STREAMLIT/bodyPerformance.csv")
 
 feature_cols = [
     "age", "gender", "height_cm", "weight_kg", "body fat_%",
