@@ -1,26 +1,37 @@
 import pandas as pd
 import joblib
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
-df = pd.read_csv("/STREAMLIT/bodyPerformance.csv")
+df = pd.read_csv("bodyPerformance.csv")
+
+df = df.rename(columns={
+    "height": "height_cm",
+    "weight": "weight_kg",
+    "body fat_%": "body_fat_pct"
+})
 
 feature_cols = [
-    "age", "gender", "height_cm", "weight_kg", "body fat_%",
-    "diastolic", "systolic",
-    "gripForce", "sit_and_bend_forward", "sit_ups", "broad_jump"
+    "age", "gender", "height_cm", "weight_kg",
+    "body_fat_pct", "diastolic", "systolic", "gripForce"
 ]
 
 X = df[feature_cols]
 y = df["class"]
 
-# one-hot encode gender
-X = pd.get_dummies(X, columns=["gender"])
+X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
-model = RandomForestClassifier(n_estimators=200, random_state=42)
+model = RandomForestClassifier(
+    n_estimators=120,
+    max_depth=8,
+    random_state=42
+)
 model.fit(X, y)
 
-# save model
-joblib.dump(model, "fitness_classifier.pkl")
+bundle = {
+    "model": model,
+    "columns": list(X.columns)
+}
 
-print("Model saved as fitness_classifier.pkl")
+joblib.dump(bundle, "fitness_classifier_compact.pkl", compress=3)
+
+print("retrained & saved")

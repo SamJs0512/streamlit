@@ -1,72 +1,41 @@
-import joblib
 import streamlit as st
 import pandas as pd
+import joblib
 
-# Load trained model
-model = joblib.load("fitness_classifier.pkl")
+# load bundle
+bundle = joblib.load("fitness_classifier_compact.pkl")
+model = bundle["model"]
+feature_columns = bundle["columns"]
 
+st.title("Body Performance Classifier")
 
-st.title("Gym Member Fitness Level Prediction")
-
-st.write("Predict fitness level (A–D) based on body measurements and exercise performance")
-
-# User inputs
-age = st.slider("Age", 10, 90, 25)
-
+age = st.number_input("Age", 10, 100)
 gender = st.selectbox("Gender", ["M", "F"])
+height = st.number_input("Height (cm)", 100, 220)
+weight = st.number_input("Weight (kg)", 30, 200)
+bodyfat = st.number_input("Body fat (%)", 1.0, 60.0)
+diastolic = st.number_input("Diastolic BP", 40, 120)
+systolic = st.number_input("Systolic BP", 80, 200)
+grip = st.number_input("Grip Force", 5, 80)
 
-height_cm = st.slider("Height (cm)", 130, 210, 170)
-weight_kg = st.slider("Weight (kg)", 30, 160, 70)
-bodyfat = st.slider("Body Fat %", 1.0, 50.0, 18.0)
+# build row
+df_input = pd.DataFrame([{
+    "age": age,
+    "gender": gender,
+    "height_cm": height,
+    "weight_kg": weight,
+    "body_fat_pct": bodyfat,
+    "diastolic": diastolic,
+    "systolic": systolic,
+    "gripForce": grip
+}])
 
-diastolic = st.slider("Diastolic BP", 40, 120, 80)
-systolic = st.slider("Systolic BP", 80, 200, 120)
+# one-hot encode gender
+df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
 
-grip = st.slider("Grip Force", 5, 70, 35)
-sitbend = st.slider("Sit & Bend Forward (cm)", -30, 30, 5)
-situps = st.slider("Sit Ups (count)", 0, 80, 30)
-broadjump = st.slider("Broad Jump (cm)", 50, 300, 160)
+# align columns used during training
+df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
-if st.button("Predict Fitness Class"):
-
-    # Create dataframe for input
-    df_input = pd.DataFrame({
-        "age": [age],
-        "gender": [gender],
-        "height_cm": [height_cm],
-        "weight_kg": [weight_kg],
-        "body fat_%": [bodyfat],
-        "diastolic": [diastolic],
-        "systolic": [systolic],
-        "gripForce": [grip],
-        "sit_and_bend_forward": [sitbend],
-        "sit_ups": [situps],
-        "broad_jump": [broadjump]
-    })
-
-    # One-hot encode gender
-    df_input = pd.get_dummies(df_input, columns=["gender"])
-
-    # Align with model training features
-    df_input = df_input.reindex(
-        columns=model.feature_names_in_,
-        fill_value=0
-    )
-
-    # Predict
-    pred_class = model.predict(df_input)[0]
-
-    st.success(f"Predicted Fitness Level: **{pred_class}**")
-
-# Optional background design
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: white;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+if st.button("Predict"):
+    pred = model.predict(df_input)[0]
+    st.success(f"Predicted body performance class: {pred}")
