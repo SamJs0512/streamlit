@@ -1,46 +1,24 @@
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 
 # ===============================
-# 1. Read CSV into DataFrame
+# 1. Load data
 # ===============================
 df = pd.read_csv("bodyPerformance.csv")
 
 # ===============================
-# 2. Summary statistics
+# 2. Clean data
 # ===============================
-print("\n--- Summary Statistics ---")
-print(df.describe())
-
-# ===============================
-# 3. Understand variable types
-# ===============================
-print("\n--- Data Types ---")
-print(df.dtypes)
-
-# ===============================
-# 4. Check for missing data
-# ===============================
-print("\n--- Missing Values ---")
-print(df.isnull().sum())
-
-# ===============================
-# 5. Clean data
-# ===============================
-# Rename problematic column
 df = df.rename(columns={"body fat_%": "body_fat_pct"})
-
-# Drop rows with missing values (safe for this dataset)
 df = df.dropna()
 
 # ===============================
-# 6. Feature selection
-# (keep model small + meaningful)
+# 3. Feature selection
 # ===============================
-feature_cols = [
+features = [
     "age",
     "gender",
     "height_cm",
@@ -51,51 +29,48 @@ feature_cols = [
     "gripForce"
 ]
 
-X = df[feature_cols]
+X = df[features]
 y = df["class"]
 
-# One-hot encode gender
+# Encode gender
 X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
 # ===============================
-# 7. Train-test split
+# 4. Train-test split
 # ===============================
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
 )
 
 # ===============================
-# 8. Initialise & train model
-# (compact to reduce pkl size)
+# 5. Train model
 # ===============================
-model = RandomForestClassifier(
-    n_estimators=80,
-    max_depth=8,
-    min_samples_leaf=5,
-    random_state=42
+model = LogisticRegression(
+    max_iter=2000,
+    multi_class="multinomial"
 )
 
 model.fit(X_train, y_train)
 
 # ===============================
-# 9. Model evaluation
+# 6. Evaluation
 # ===============================
 y_pred = model.predict(X_test)
 
-print("\n--- Model Accuracy ---")
-print(accuracy_score(y_test, y_pred))
-
-print("\n--- Classification Report ---")
+print("Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
 # ===============================
-# 10. Save model + feature columns
+# 7. Save bundle
 # ===============================
 bundle = {
     "model": model,
     "columns": list(X.columns)
 }
 
-joblib.dump(bundle, "fitness_classifier_compact.pkl", compress=3)
+joblib.dump(bundle, "fitness_classifier.pkl")
 
-print("\n✅ Model saved as fitness_classifier_compact.pkl")
+print("✅ Model saved successfully")

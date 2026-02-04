@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# ===============================
-# Page config
-# ===============================
 st.set_page_config(
     page_title="Fitness Level Predictor",
     page_icon="💪",
@@ -12,31 +9,28 @@ st.set_page_config(
 )
 
 # ===============================
-# Load model bundle
+# Load model
 # ===============================
-bundle = joblib.load("fitness_classifier_compact.pkl")
+bundle = joblib.load("fitness_classifier.pkl")
 model = bundle["model"]
 feature_columns = bundle["columns"]
 
 # ===============================
-# UI Header
+# UI
 # ===============================
 st.markdown(
-    """
-    <h1 style='text-align: center;'>💪 Fitness Level Predictor</h1>
-    <p style='text-align: center; color: gray;'>
-    Predict gym member fitness class (A–D) using body performance data
-    </p>
-    """,
+    "<h1 style='text-align:center;'>💪 Gym Fitness Level Predictor</h1>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "<p style='text-align:center;color:gray;'>Predict fitness class A–D</p>",
     unsafe_allow_html=True
 )
 
 st.divider()
 
-# ===============================
-# Input form
-# ===============================
-with st.form("fitness_form"):
+with st.form("form"):
     col1, col2 = st.columns(2)
 
     with col1:
@@ -49,22 +43,22 @@ with st.form("fitness_form"):
         gender = st.selectbox("Gender", ["M", "F"])
         systolic = st.number_input("Systolic BP", 80, 200, 120)
         diastolic = st.number_input("Diastolic BP", 40, 120, 80)
-        grip = st.number_input("Grip Force", 5, 70, 35)
+        grip = st.number_input("Grip Strength", 5, 70, 35)
 
-    submitted = st.form_submit_button("🔮 Predict Fitness Level")
+    submit = st.form_submit_button("Predict")
 
 # ===============================
 # Prediction
 # ===============================
-if submitted:
+if submit:
     df_input = pd.DataFrame([{
         "age": age,
         "gender": gender,
         "height_cm": height,
         "weight_kg": weight,
         "body_fat_pct": bodyfat,
-        "systolic": systolic,
         "diastolic": diastolic,
+        "systolic": systolic,
         "gripForce": grip
     }])
 
@@ -73,13 +67,11 @@ if submitted:
 
     prediction = model.predict(df_input)[0]
 
-    st.success(f"🏁 **Predicted Fitness Class:** {prediction}")
+    st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
 
-    st.info(
-        """
-        **Class A**: Excellent  
-        **Class B**: Good  
-        **Class C**: Average  
-        **Class D**: Needs Improvement  
-        """
-    )
+    st.info("""
+    **A** – Excellent  
+    **B** – Good  
+    **C** – Average  
+    **D** – Needs Improvement
+    """)
