@@ -30,7 +30,6 @@ st.markdown(f"""
 <style>
 #MainMenu {{visibility:hidden;}}
 footer {{visibility:hidden;}}
-
 html {{ scroll-behavior:smooth; }}
 body {{ margin:0; padding:0;}}
 
@@ -63,7 +62,6 @@ body {{ margin:0; padding:0;}}
     animation:fadeIn 3s ease-in-out;
 }}
 
-/* DUMBBELL */
 .dumbbell {{
     position:absolute;
     width:160px;
@@ -112,11 +110,6 @@ body {{ margin:0; padding:0;}}
     text-align:center;
 }}
 
-.glass .stSlider, .glass .stNumberInput, .glass .stSelectbox {{
-    margin-bottom:20px;
-}}
-
-/* BUTTON */
 .stButton>button {{
     background: #ff8c00;
     color:white;
@@ -156,7 +149,6 @@ body {{ margin:0; padding:0;}}
     opacity:0.8;
 }}
 
-/* Animations */
 @keyframes fadeIn {{
     from {{opacity:0;}}
     to {{opacity:1;}}
@@ -196,13 +188,13 @@ with col2:
     diastolic = st.number_input("Diastolic BP", 40, 120, 80)
     grip = st.number_input("Grip Strength", 5, 70, 35)
 
-predict = st.button("Predict Fitness Level")
+submit = st.button("Predict Fitness Level")
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # =============================
 # PREDICTION
 # =============================
-if predict:
+if submit:
     with st.spinner("AI analyzing your performance..."):
         time.sleep(2)
 
@@ -230,14 +222,15 @@ if predict:
     </script>
     """, unsafe_allow_html=True)
 
+    # Show result dynamically based on prediction
     st.markdown(f"""
     <div id="result" class="result-section">
-        <div class="result-text">CLASS {prediction}</div>
+        <div class="result-text">{prediction}</div>
         <div class="sub">Your Fitness Performance Tier</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Confetti for Class A
+    # Confetti only if prediction is actually "A"
     if str(prediction).upper() == "A":
         st.markdown("""
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -249,4 +242,3 @@ if predict:
         });
         </script>
         """, unsafe_allow_html=True)
-
