@@ -195,9 +195,6 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # PREDICTION
 # =============================
 if submit:
-    with st.spinner("AI analyzing your performance..."):
-        time.sleep(2)
-
     df_input = pd.DataFrame([{
         "age": age,
         "gender": gender,
@@ -211,34 +208,14 @@ if submit:
 
     df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
     df_input = df_input.reindex(columns=feature_columns, fill_value=0)
+
     prediction = model.predict(df_input)[0]
 
-    # Auto-scroll to result
-    st.markdown("""
-    <script>
-        setTimeout(function(){
-            document.getElementById('result').scrollIntoView({behavior:'smooth'});
-        }, 300);
-    </script>
-    """, unsafe_allow_html=True)
+    st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
 
-    # Show result dynamically based on prediction
-    st.markdown(f"""
-    <div id="result" class="result-section">
-        <div class="result-text">{prediction}</div>
-        <div class="sub">Your Fitness Performance Tier</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Confetti only if prediction is actually "A"
-    if str(prediction).upper() == "A":
-        st.markdown("""
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-        <script>
-        confetti({
-            particleCount: 200,
-            spread: 120,
-            origin: { y: 0.6 }
-        });
-        </script>
-        """, unsafe_allow_html=True)
+    st.info("""
+    **A** – Excellent  
+    **B** – Good  
+    **C** – Average  
+    **D** – Needs Improvement
+    """)
