@@ -1,3 +1,4 @@
+# train.py
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
@@ -8,24 +9,25 @@ from sklearn.metrics import accuracy_score, classification_report
 # 1. Load data
 # ===============================
 df = pd.read_csv("bodyPerformance.csv")
-df.columns = df.columns.str.strip()  # remove extra spaces
+df.columns = df.columns.str.strip()
 
 # ===============================
-# 2. Feature selection
+# 2. Features
 # ===============================
-features = [
+base_features = [
     "age", "gender", "height_cm", "weight_kg", "body fat_%",
     "diastolic", "systolic", "gripForce",
     "sit and bend forward_cm", "sit-ups counts", "broad jump_cm"
 ]
 
-X = df[features].copy()
+X = df[base_features].copy()
 y = df["class"]
 
 # ===============================
 # 3. Encode gender
 # ===============================
-X = pd.get_dummies(X, columns=["gender"], drop_first=True)
+X["gender_M"] = (X["gender"] == "M").astype(int)
+X.drop(columns=["gender"], inplace=True)
 
 # ===============================
 # 4. Feature engineering
@@ -38,7 +40,7 @@ X["strength_weight"] = X["gripForce"] / X["weight_kg"]
 X["bodyfat_BMI"] = X["body fat_%"] * X["BMI"]
 
 # ===============================
-# 5. Train-test split
+# 5. Split
 # ===============================
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
@@ -48,7 +50,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ===============================
-# 6. Train Model
+# 6. Train
 # ===============================
 model = RandomForestClassifier(
     n_estimators=200,
@@ -63,16 +65,18 @@ model.fit(X_train, y_train)
 # 7. Evaluate
 # ===============================
 y_pred = model.predict(X_test)
-print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
 print(classification_report(y_test, y_pred))
 
 # ===============================
-# 8. Save model + feature columns
+# 8. Save bundle
 # ===============================
-bundle = {
-    "model": model,
-    "columns": list(X.columns)
-}
+joblib.dump(
+    {
+        "model": model,
+        "columns": X.columns.tolist()
+    },
+    "fitness_classifier.pkl"
+)
 
-joblib.dump(bundle, "fitness_classifier.pkl", compress=4, protocol=3)
-print("✅ Model saved successfully!")
+print("✅ Model saved")

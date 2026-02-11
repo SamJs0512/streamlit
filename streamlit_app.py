@@ -148,22 +148,25 @@ submit = st.button("Predict Fitness Level")
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # =============================
-# PREDICTION LOGIC
+# PREDICTION
 # =============================
 if submit:
     try:
         df_input = pd.DataFrame([{
-            "age": age, "gender": gender, "height_cm": height, "weight_kg": weight,
-            "body fat_%": bodyfat, "diastolic": diastolic, "systolic": systolic,
-            "gripForce": grip, "sit and bend forward_cm": flex,
-            "sit-ups counts": situps, "broad jump_cm": jump
+            "age": age,
+            "height_cm": height,
+            "weight_kg": weight,
+            "body fat_%": bodyfat,
+            "diastolic": diastolic,
+            "systolic": systolic,
+            "gripForce": grip,
+            "sit and bend forward_cm": flex,
+            "sit-ups counts": situps,
+            "broad jump_cm": jump,
+            "gender_M": 1 if gender == "M" else 0
         }])
 
-        # Encode gender
-        df_input["gender_M"] = 1 if gender == "M" else 0
-        df_input = df_input.drop(columns=["gender"], errors="ignore")
-
-        # Feature engineering
+        # Feature engineering (IDENTICAL to training)
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
         df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
         df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
@@ -171,20 +174,13 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # Align with training columns
+        # Align columns EXACTLY
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
-        # Predict
         prediction = model.predict(df_input)[0]
 
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
-        st.info("""
-        **A** – Excellent  
-        **B** – Good  
-        **C** – Average  
-        **D** – Needs Improvement
-        """)
 
     except Exception as e:
         st.error(f"Prediction Error: {e}")
