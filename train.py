@@ -2,12 +2,12 @@ import pandas as pd
 import joblib
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 # 1. Load data
 df = pd.read_csv("bodyPerformance.csv")
-df.columns = df.columns.str.strip() # Clean column names
+df.columns = df.columns.str.strip()  # Clean column names
 
 # 2. Feature selection (Keep ALL performance metrics for >0.7 accuracy)
 features = [
@@ -35,25 +35,24 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# 6. Train Model
-model = HistGradientBoostingClassifier(
-    max_iter=1000,
+# 6. Train Model using RandomForest (stable for Streamlit)
+model = RandomForestClassifier(
+    n_estimators=500,
     max_depth=12,
-    learning_rate=0.05,
     random_state=42,
-    early_stopping=True,
-    l2_regularization=0.5
+    class_weight="balanced"  # helps with any class imbalance
 )
 model.fit(X_train, y_train)
 
 # 7. Evaluate
 y_pred = model.predict(X_test)
 print(f"✅ Training Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+print(classification_report(y_test, y_pred))
 
 # 8. Save model + columns
 bundle = {
     "model": model,
     "columns": list(X.columns)
 }
-joblib.dump(bundle, "fitness_classifier.pkl")
+joblib.dump(bundle, "fitness_classifier.pkl", protocol=5)  # safe for Streamlit
 print("✅ NEW 'fitness_classifier.pkl' saved. Upload this file to GitHub!")

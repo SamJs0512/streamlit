@@ -8,7 +8,6 @@ st.set_page_config(layout="wide", page_title="Fitness AI Predictor")
 # =============================
 # LOAD MODEL
 # =============================
-# Make sure this matches the scikit-learn version used in training
 bundle = joblib.load("fitness_classifier.pkl")
 model = bundle["model"]
 feature_columns = bundle["columns"]
@@ -21,7 +20,7 @@ def get_base64(file):
         with open(file, "rb") as f:
             return base64.b64encode(f.read()).decode()
     except:
-        return ""
+        return ""  # fallback if images missing
 
 gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
@@ -36,6 +35,7 @@ footer {{visibility:hidden;}}
 html {{scroll-behavior:smooth;}}
 body {{margin:0; padding:0;}}
 
+/* HERO SECTION */
 .hero {{
     height:100vh;
     background:
@@ -51,21 +51,17 @@ body {{margin:0; padding:0;}}
     text-align:center;
     position:relative;
 }}
-.hero h1 {{font-size:80px; font-weight:900; animation:fadeIn 2s ease-in-out;}}
-.hero p {{font-size:24px; opacity:0.9; animation:fadeIn 3s ease-in-out;}}
-.dumbbell {{
-    position:absolute;
-    width:160px;
-    right:10%;
-    top:35%;
-    animation:float 5s ease-in-out infinite;
-}}
+.hero h1 {{ font-size:80px; font-weight:900; animation:fadeIn 2s ease-in-out; }}
+.hero p {{ font-size:24px; opacity:0.9; animation:fadeIn 3s ease-in-out; }}
+.dumbbell {{ position:absolute; width:160px; right:10%; top:35%; animation:float 5s ease-in-out infinite; }}
+
 @keyframes float {{
   0% {{transform:translateY(0px);}}
   50% {{transform:translateY(-25px);}}
   100% {{transform:translateY(0px);}}
 }}
 
+/* FORM SECTION */
 .form-section {{
     min-height:100vh;
     background:
@@ -92,7 +88,7 @@ body {{margin:0; padding:0;}}
     gap:25px;
 }}
 .stButton>button {{
-    background:#ff8c00;
+    background: #ff8c00;
     color:white;
     font-size:20px;
     font-weight:700;
@@ -100,13 +96,15 @@ body {{margin:0; padding:0;}}
     padding:12px 35px;
     width:100%;
 }}
-.stButton>button:hover {{background:#ffa533;}}
+.stButton>button:hover {{
+    background:#ffa533;
+}}
 @keyframes fadeIn {{from {{opacity:0;}} to {{opacity:1;}}}}
 </style>
 """, unsafe_allow_html=True)
 
 # =============================
-# HERO SECTION
+# HERO
 # =============================
 st.markdown(f"""
 <div class="hero">
@@ -117,7 +115,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # =============================
-# FORM SECTION
+# FORM
 # =============================
 st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
 st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -154,25 +152,19 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # =============================
 if submit:
     try:
+        # Create DataFrame from input
         df_input = pd.DataFrame([{
-            "age": age,
-            "gender": gender,
-            "height_cm": height,
-            "weight_kg": weight,
-            "body fat_%": bodyfat,
-            "diastolic": diastolic,
-            "systolic": systolic,
-            "gripForce": grip,
-            "sit and bend forward_cm": flex,
-            "sit-ups counts": situps,
-            "broad jump_cm": jump
+            "age": age, "gender": gender, "height_cm": height, "weight_kg": weight,
+            "body fat_%": bodyfat, "diastolic": diastolic, "systolic": systolic,
+            "gripForce": grip, "sit and bend forward_cm": flex,
+            "sit-ups counts": situps, "broad jump_cm": jump
         }])
 
         # Encode gender
         df_input["gender_M"] = 1 if gender == "M" else 0
         df_input = df_input.drop(columns=["gender"])
 
-        # Derived features
+        # Feature engineering
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
         df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
         df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
@@ -180,13 +172,13 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # Align columns safely
+        # Align columns with training features
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
         # Predict
         prediction = model.predict(df_input)[0]
 
-        # Display results
+        # Show result
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
         st.info("""
@@ -195,5 +187,6 @@ if submit:
         **C** – Average  
         **D** – Needs Improvement
         """)
+
     except Exception as e:
         st.error(f"Prediction Error: {e}")
