@@ -24,16 +24,17 @@ gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
 
 # =============================
-# ELITE CSS
+# CSS + STYLING
 # =============================
 st.markdown(f"""
 <style>
-
 #MainMenu {{visibility:hidden;}}
 footer {{visibility:hidden;}}
 
 html {{ scroll-behavior:smooth; }}
+body {{ margin:0; padding:0;}}
 
+/* HERO SECTION */
 .hero {{
     height:100vh;
     background:
@@ -59,6 +60,7 @@ html {{ scroll-behavior:smooth; }}
 .hero p {{
     font-size:24px;
     opacity:0.9;
+    animation:fadeIn 3s ease-in-out;
 }}
 
 .next-btn {{
@@ -70,6 +72,7 @@ html {{ scroll-behavior:smooth; }}
     font-weight:700;
     text-decoration:none;
     transition:0.4s;
+    cursor:pointer;
 }}
 
 .next-btn:hover {{
@@ -78,6 +81,7 @@ html {{ scroll-behavior:smooth; }}
     transform:scale(1.07);
 }}
 
+/* DUMBBELL ANIMATION */
 .dumbbell {{
     position:absolute;
     width:160px;
@@ -92,6 +96,7 @@ html {{ scroll-behavior:smooth; }}
   100% {{transform:translateY(0px);}}
 }}
 
+/* FORM SECTION */
 .form-section {{
     min-height:100vh;
     background:
@@ -114,6 +119,12 @@ html {{ scroll-behavior:smooth; }}
     color:white;
 }}
 
+.glass h3 {{
+    font-size:32px;
+    margin-bottom:30px;
+}}
+
+/* RESULT SECTION */
 .result-section {{
     height:100vh;
     background:
@@ -139,6 +150,7 @@ html {{ scroll-behavior:smooth; }}
     opacity:0.8;
 }}
 
+/* Animations */
 @keyframes fadeIn {{
     from {{opacity:0;}}
     to {{opacity:1;}}
@@ -167,7 +179,6 @@ st.markdown(f"""
 # =============================
 st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
 st.markdown('<div class="glass">', unsafe_allow_html=True)
-
 st.markdown("### Enter Your Body Metrics")
 
 col1, col2 = st.columns(2)
@@ -192,7 +203,6 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # PREDICTION
 # =============================
 if predict:
-
     with st.spinner("AI analyzing your performance..."):
         time.sleep(2)
 
@@ -209,16 +219,15 @@ if predict:
 
     df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
     df_input = df_input.reindex(columns=feature_columns, fill_value=0)
-
     prediction = model.predict(df_input)[0]
 
-    # Auto-scroll
+    # Auto-scroll to result
     st.markdown("""
-        <script>
+    <script>
         setTimeout(function(){
-            window.location.href = "#result";
+            document.getElementById('result').scrollIntoView({behavior:'smooth'});
         }, 300);
-        </script>
+    </script>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
@@ -228,7 +237,7 @@ if predict:
     </div>
     """, unsafe_allow_html=True)
 
-    # Custom JS Confetti for Class A
+    # Confetti for Class A
     if str(prediction).upper() == "A":
         st.markdown("""
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
