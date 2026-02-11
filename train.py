@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, classification_report
 df = pd.read_csv("bodyPerformance.csv")
 df.columns = df.columns.str.strip()  # Clean column names
 
-# 2. Feature selection (Keep ALL performance metrics for >0.7 accuracy)
+# 2. Feature selection
 features = [
     "age", "gender", "height_cm", "weight_kg", "body fat_%",
     "diastolic", "systolic", "gripForce", 
@@ -19,7 +19,7 @@ features = [
 X = df[features].copy()
 y = df["class"]
 
-# 3. Encode gender (Female: 0, Male: 1)
+# 3. Encode gender
 X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
 # 4. Feature Engineering
@@ -35,12 +35,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# 6. Train Model using RandomForest (stable for Streamlit)
+# 6. Train Model with smaller size
 model = RandomForestClassifier(
-    n_estimators=500,
-    max_depth=12,
+    n_estimators=200,   # reduced from 500
+    max_depth=10,       # reduced from 12
     random_state=42,
-    class_weight="balanced"  # helps with any class imbalance
+    class_weight="balanced",
+    n_jobs=-1
 )
 model.fit(X_train, y_train)
 
@@ -49,10 +50,10 @@ y_pred = model.predict(X_test)
 print(f"✅ Training Accuracy: {accuracy_score(y_test, y_pred):.4f}")
 print(classification_report(y_test, y_pred))
 
-# 8. Save model + columns
+# 8. Save model + columns with compression
 bundle = {
     "model": model,
     "columns": list(X.columns)
 }
-joblib.dump(bundle, "fitness_classifier.pkl", protocol=5)  # safe for Streamlit
-print("✅ NEW 'fitness_classifier.pkl' saved. Upload this file to GitHub!")
+joblib.dump(bundle, "fitness_classifier.pkl", compress=3, protocol=5)  # compress level 3
+print("✅ NEW 'fitness_classifier.pkl' saved. Should now be <25MB")
