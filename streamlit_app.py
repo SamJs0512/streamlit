@@ -20,7 +20,7 @@ def get_base64(file):
         with open(file, "rb") as f:
             return base64.b64encode(f.read()).decode()
     except:
-        return ""  # fallback if images missing
+        return ""  # fallback if image missing
 
 gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
@@ -152,7 +152,6 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # =============================
 if submit:
     try:
-        # Create DataFrame from input
         df_input = pd.DataFrame([{
             "age": age, "gender": gender, "height_cm": height, "weight_kg": weight,
             "body fat_%": bodyfat, "diastolic": diastolic, "systolic": systolic,
@@ -162,7 +161,7 @@ if submit:
 
         # Encode gender
         df_input["gender_M"] = 1 if gender == "M" else 0
-        df_input = df_input.drop(columns=["gender"])
+        df_input = df_input.drop(columns=["gender"], errors="ignore")
 
         # Feature engineering
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
@@ -172,13 +171,12 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # Align columns with training features
+        # Align with training columns
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
         # Predict
         prediction = model.predict(df_input)[0]
 
-        # Show result
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
         st.info("""
