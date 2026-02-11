@@ -24,7 +24,7 @@ gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
 
 # =============================
-# CSS + STYLING
+# CSS STYLING
 # =============================
 st.markdown(f"""
 <style>
@@ -63,25 +63,7 @@ body {{ margin:0; padding:0;}}
     animation:fadeIn 3s ease-in-out;
 }}
 
-.next-btn {{
-    margin-top:40px;
-    padding:18px 60px;
-    border-radius:50px;
-    background:white;
-    color:black;
-    font-weight:700;
-    text-decoration:none;
-    transition:0.4s;
-    cursor:pointer;
-}}
-
-.next-btn:hover {{
-    background:#ff8c00;
-    color:white;
-    transform:scale(1.07);
-}}
-
-/* DUMBBELL ANIMATION */
+/* DUMBBELL */
 .dumbbell {{
     position:absolute;
     width:160px;
@@ -107,21 +89,45 @@ body {{ margin:0; padding:0;}}
     display:flex;
     justify-content:center;
     align-items:center;
+    padding:50px 0;
 }}
 
 .glass {{
     backdrop-filter:blur(25px);
-    background:rgba(255,255,255,0.07);
+    background:rgba(255,255,255,0.08);
     border-radius:30px;
-    padding:60px;
-    width:65%;
-    box-shadow:0 10px 50px rgba(0,0,0,0.7);
+    padding:50px 70px;
+    width:70%;
+    max-width:900px;
+    box-shadow:0 10px 60px rgba(0,0,0,0.7);
     color:white;
+    display:flex;
+    flex-direction:column;
+    gap:25px;
 }}
 
 .glass h3 {{
-    font-size:32px;
-    margin-bottom:30px;
+    font-size:36px;
+    margin-bottom:20px;
+    text-align:center;
+}}
+
+.glass .stSlider, .glass .stNumberInput, .glass .stSelectbox {{
+    margin-bottom:20px;
+}}
+
+/* BUTTON */
+.stButton>button {{
+    background: #ff8c00;
+    color:white;
+    font-size:20px;
+    font-weight:700;
+    border-radius:30px;
+    padding:12px 35px;
+    transition:0.3s;
+}}
+.stButton>button:hover {{
+    background:#ffa533;
 }}
 
 /* RESULT SECTION */
@@ -155,7 +161,6 @@ body {{ margin:0; padding:0;}}
     from {{opacity:0;}}
     to {{opacity:1;}}
 }}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -167,10 +172,6 @@ st.markdown(f"""
     <img src="data:image/png;base64,{dumbbell}" class="dumbbell">
     <h1>Predict Your Fitness Class</h1>
     <p>AI-powered elite performance analytics</p>
-
-    <button class="next-btn" onclick="document.getElementById('form').scrollIntoView({{behavior: 'smooth'}});">
-        Start Now ↓
-    </button>
 </div>
 """, unsafe_allow_html=True)
 
@@ -196,7 +197,6 @@ with col2:
     grip = st.number_input("Grip Strength", 5, 70, 35)
 
 predict = st.button("Predict Fitness Level")
-
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # =============================
@@ -249,3 +249,4 @@ if predict:
         });
         </script>
         """, unsafe_allow_html=True)
+
