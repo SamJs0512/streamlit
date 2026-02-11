@@ -184,7 +184,7 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # =============================
 if submit:
     try:
-        # 1. Create Input DF
+        # 1. Create Data
         df_input = pd.DataFrame([{
             "age": age, "gender": gender, "height_cm": height, "weight_kg": weight,
             "body fat_%": bodyfat, "diastolic": diastolic, "systolic": systolic,
@@ -192,10 +192,9 @@ if submit:
             "sit-ups counts": situps, "broad jump_cm": jump
         }])
 
-        # 2. Encoding & Feature Engineering
+        # 2. Process Data
         df_input["gender_M"] = 1 if gender == "M" else 0
         df_input = df_input.drop(columns=["gender"])
-        
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
         df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
         df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
@@ -209,12 +208,14 @@ if submit:
         # 4. Predict
         prediction = model.predict(df_input)[0]
 
-        # 5. Display
+        # 5. Display Result
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
-        st.markdown("""
-        **Class Guide:** - **A**: Excellent  |  **B**: Good  |  **C**: Average  |  **D**: Needs Improvement
+        st.info("""
+        **A** – Excellent  
+        **B** – Good  
+        **C** – Average  
+        **D** – Needs Improvement
         """)
-
     except Exception as e:
         st.error(f"Prediction Error: {e}")

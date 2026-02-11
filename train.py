@@ -7,12 +7,9 @@ from sklearn.metrics import accuracy_score, classification_report
 
 # 1. Load data
 df = pd.read_csv("bodyPerformance.csv")
+df.columns = df.columns.str.strip() # Clean column names
 
-# Clean column names to handle spaces or special characters consistently
-df.columns = df.columns.str.strip()
-
-# 2. Feature selection
-# We include the physical test results as they are crucial for the 'class' prediction
+# 2. Feature selection (Keep ALL performance metrics for >0.7 accuracy)
 features = [
     "age", "gender", "height_cm", "weight_kg", "body fat_%",
     "diastolic", "systolic", "gripForce", 
@@ -25,9 +22,9 @@ y = df["class"]
 # 3. Encode gender (Female: 0, Male: 1)
 X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
-# 4. Derived features (Feature Engineering)
+# 4. Feature Engineering
 X["BMI"] = X["weight_kg"] / ((X["height_cm"] / 100) ** 2)
-X["BP_ratio"] = X["systolic"] / (X["diastolic"] + 0.1) # Added small constant to avoid div by zero
+X["BP_ratio"] = X["systolic"] / (X["diastolic"] + 0.1)
 X["age_grip"] = X["age"] * X["gripForce"]
 X["weight_height_ratio"] = X["weight_kg"] / X["height_cm"]
 X["strength_weight"] = X["gripForce"] / X["weight_kg"]
@@ -38,8 +35,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# 6. Train HistGradientBoostingClassifier
-# This model is excellent for this dataset size and type
+# 6. Train Model
 model = HistGradientBoostingClassifier(
     max_iter=1000,
     max_depth=12,
@@ -52,9 +48,7 @@ model.fit(X_train, y_train)
 
 # 7. Evaluate
 y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-print(f"✅ Accuracy: {accuracy:.4f}")
-print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print(f"✅ Training Accuracy: {accuracy_score(y_test, y_pred):.4f}")
 
 # 8. Save model + columns
 bundle = {
@@ -62,6 +56,4 @@ bundle = {
     "columns": list(X.columns)
 }
 joblib.dump(bundle, "fitness_classifier.pkl")
-print("✅ Model saved successfully as 'fitness_classifier.pkl'")
-import sklearn
-print(f"Local Scikit-Learn Version: {sklearn.__version__}")
+print("✅ NEW 'fitness_classifier.pkl' saved. Upload this file to GitHub!")
