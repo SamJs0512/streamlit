@@ -171,7 +171,7 @@ with col2:
 
 with col3:
     st.write("💪 **Performance Tests**")
-    flexibility = st.number_input("Sit & Bend (cm)", -30.0, 50.0, 15.0)
+    flex = st.number_input("Sit & Bend (cm)", -30.0, 50.0, 15.0)
     situps = st.number_input("Sit-ups Count", 0, 100, 40)
     jump = st.number_input("Broad Jump (cm)", 0, 400, 200)
 
@@ -184,26 +184,18 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # =============================
 if submit:
     try:
-        # 1. Create Initial DataFrame
+        # 1. Create Input DF
         df_input = pd.DataFrame([{
-            "age": age,
-            "gender": gender,
-            "height_cm": height,
-            "weight_kg": weight,
-            "body fat_%": bodyfat,
-            "diastolic": diastolic,
-            "systolic": systolic,
-            "gripForce": grip,
-            "sit and bend forward_cm": flexibility,
-            "sit-ups counts": situps,
-            "broad jump_cm": jump
+            "age": age, "gender": gender, "height_cm": height, "weight_kg": weight,
+            "body fat_%": bodyfat, "diastolic": diastolic, "systolic": systolic,
+            "gripForce": grip, "sit and bend forward_cm": flex,
+            "sit-ups counts": situps, "broad jump_cm": jump
         }])
 
-        # 2. Gender Encoding 
+        # 2. Encoding & Feature Engineering
         df_input["gender_M"] = 1 if gender == "M" else 0
         df_input = df_input.drop(columns=["gender"])
-
-        # 3. Feature Engineering
+        
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
         df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
         df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
@@ -211,25 +203,18 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # 4. Reindex
+        # 3. Align Columns
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
-        # 5. Prediction
+        # 4. Predict
         prediction = model.predict(df_input)[0]
 
-        # 6. Result Display
+        # 5. Display
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
-        
-        # Fixed formatting for the info box
         st.markdown("""
-        ### Class Guide:
-        - **A**: Excellent performance
-        - **B**: Good performance
-        - **C**: Average performance
-        - **D**: Needs Improvement
+        **Class Guide:** - **A**: Excellent  |  **B**: Good  |  **C**: Average  |  **D**: Needs Improvement
         """)
 
     except Exception as e:
-        st.error(f"Version Mismatch Error: {e}")
-        st.info("To fix this: Re-run your training script to generate a new .pkl file and upload it to GitHub.")
+        st.error(f"Prediction Error: {e}")

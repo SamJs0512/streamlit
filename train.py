@@ -63,3 +63,5 @@ bundle = {
 }
 joblib.dump(bundle, "fitness_classifier.pkl")
 print("✅ Model saved successfully as 'fitness_classifier.pkl'")
+import sklearn
+print(f"Local Scikit-Learn Version: {sklearn.__version__}")
