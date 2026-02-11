@@ -10,7 +10,7 @@ st.set_page_config(page_title="Fitness Class Predictor", layout="wide")
 # --------------------------
 # LOAD MODEL
 # --------------------------
-with open("fitness_model.pkl", "rb") as f:
+with open("fitness_classifier.pkl", "rb") as f:
     model = pickle.load(f)
 
 # --------------------------
