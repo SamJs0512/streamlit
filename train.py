@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, classification_report
 df = pd.read_csv("bodyPerformance.csv")
 df.columns = df.columns.str.strip()
 
-# Fix column naming inconsistencies
+# Fix column naming inconsistencies to be code-friendly
 df = df.rename(columns={
     "body fat_%": "body_fat_pct",
     "gripForce": "gripforce",
@@ -31,19 +31,19 @@ num_cols = [
 
 for col in num_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
-    df[col].fillna(df[col].median(), inplace=True)
+    df[col] = df[col].fillna(df[col].median())
 
 df["class"] = df["class"].astype(str)
 
 # =============================
-# 3. Feature Selection
+# 3. Feature Selection & Encoding
 # =============================
-features = num_cols + ["gender"]
-X = df[features].copy()
+X = df[num_cols + ["gender"]].copy()
 y = df["class"]
 
-# Encode gender
-X = pd.get_dummies(X, columns=["gender"], drop_first=True)
+# Explicitly encode gender: F=0, M=1 (equivalent to get_dummies drop_first=True)
+X['gender_M'] = (X['gender'] == 'M').astype(int)
+X = X.drop(columns=['gender'])
 
 # =============================
 # 4. Feature Engineering
@@ -62,7 +62,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # =============================
-# 6. Train Final Tuned Model
+# 6. Train Model
 # =============================
 model = RandomForestClassifier(
     n_estimators=200,
@@ -79,19 +79,16 @@ model.fit(X_train, y_train)
 # 7. Evaluation
 # =============================
 y_pred = model.predict(X_test)
-
 print(f"✅ Final Model Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred))
 
 # =============================
-# 8. Save Model for Streamlit
+# 8. Save Model Bundle
 # =============================
+# We save the feature names to ensure the Streamlit app uses the exact same order
 bundle = {
     "model": model,
-    "columns": list(X.columns)
+    "columns": list(X.columns) 
 }
 
 joblib.dump(bundle, "fitness_classifier.pkl", compress=3)
-
 print("✅ fitness_classifier.pkl saved successfully!")
