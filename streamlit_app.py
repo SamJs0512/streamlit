@@ -183,54 +183,54 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # PREDICTION LOGIC
 # =============================
 if submit:
-    # 1. Create Initial DataFrame (Must match training feature names exactly)
-    df_input = pd.DataFrame([{
-        "age": age,
-        "gender": gender,
-        "height_cm": height,
-        "weight_kg": weight,
-        "body fat_%": bodyfat,
-        "diastolic": diastolic,
-        "systolic": systolic,
-        "gripForce": grip,
-        "sit and bend forward_cm": flexibility,
-        "sit-ups counts": situps,
-        "broad jump_cm": jump
-    }])
+    try:
+        # 1. Create Initial DataFrame
+        # Note: We use the exact names from the CSV to ensure consistency
+        df_input = pd.DataFrame([{
+            "age": age,
+            "gender": gender,
+            "height_cm": height,
+            "weight_kg": weight,
+            "body fat_%": bodyfat,
+            "diastolic": diastolic,
+            "systolic": systolic,
+            "gripForce": grip,
+            "sit and bend forward_cm": flexibility,
+            "sit-ups counts": situps,
+            "broad jump_cm": jump
+        }])
 
-    # 2. Gender Encoding (Matches drop_first=True used in training)
-    df_input["gender_M"] = 1 if gender == "M" else 0
-    df_input = df_input.drop(columns=["gender"])
+        # 2. Manual Gender Encoding (Matches drop_first=True)
+        # We create the column 'gender_M' which the model expects
+        df_input["gender_M"] = 1 if gender == "M" else 0
+        df_input = df_input.drop(columns=["gender"])
 
-    # 3. Feature Engineering (Derived features model expects)
-    df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
-    df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
-    df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
-    df_input["weight_height_ratio"] = df_input["weight_kg"] / df_input["height_cm"]
-    df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
-    df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
+        # 3. Feature Engineering (Derived features)
+        df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
+        df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
+        df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
+        df_input["weight_height_ratio"] = df_input["weight_kg"] / df_input["height_cm"]
+        df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
+        df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-    # 4. Reindex to match the training column order
-    df_input = df_input.reindex(columns=feature_columns, fill_value=0)
+        # 4. Reindex to match the training column order exactly
+        df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
-    # 5. Prediction
-    prediction = model.predict(df_input)[0]
+        # 5. Prediction
+        prediction = model.predict(df_input)[0]
 
-    # Map the class to descriptions
-    class_map = {
-        "A": "🏆 Class A (Elite Performance)",
-        "B": "🥇 Class B (Good Fitness)",
-        "C": "🥈 Class C (Average Fitness)",
-        "D": "🥉 Class D (Needs Improvement)"
-    }
-    
-    result_text = class_map.get(prediction, prediction)
+        # Result display
+        st.balloons()
+        st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
 
-    # 6. Result Display
-    st.balloons()
-    st.markdown(f"""
-    <div style="text-align:center; padding:20px; background:rgba(255,140,0,0.2); border-radius:15px; border:1px solid #ff8c00;">
-        <h2 style="color:#ff8c00; margin:0;">Your Result</h2>
-        <h1 style="font-size:50px; margin:10px 0;">{result_text}</h1>
-    </div>
-    """, unsafe_allow_html=True)
+        st.info("""
+        **Class Meanings:**
+        * **A** – Excellent performance
+        * **B** – Good performance
+        * **C** – Average performance
+        * **D** – Needs Improvement
+        """)
+        
+    except Exception as e:
+        st.error(f"Prediction Error: {e}")
+        st.warning("This often happens if the model was trained on a different version of Scikit-Learn. Please re-train and re-upload your .pkl file.")
