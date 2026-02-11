@@ -185,7 +185,6 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 if submit:
     try:
         # 1. Create Initial DataFrame
-        # Note: We use the exact names from the CSV to ensure consistency
         df_input = pd.DataFrame([{
             "age": age,
             "gender": gender,
@@ -200,12 +199,11 @@ if submit:
             "broad jump_cm": jump
         }])
 
-        # 2. Manual Gender Encoding (Matches drop_first=True)
-        # We create the column 'gender_M' which the model expects
+        # 2. Gender Encoding 
         df_input["gender_M"] = 1 if gender == "M" else 0
         df_input = df_input.drop(columns=["gender"])
 
-        # 3. Feature Engineering (Derived features)
+        # 3. Feature Engineering
         df_input["BMI"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
         df_input["BP_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
         df_input["age_grip"] = df_input["age"] * df_input["gripForce"]
@@ -213,24 +211,25 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # 4. Reindex to match the training column order exactly
+        # 4. Reindex
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
         # 5. Prediction
         prediction = model.predict(df_input)[0]
 
-        # Result display
+        # 6. Result Display
         st.balloons()
         st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
-
-        st.info("""
-        **Class Meanings:**
-        * **A** – Excellent performance
-        * **B** – Good performance
-        * **C** – Average performance
-        * **D** – Needs Improvement
-        """)
         
+        # Fixed formatting for the info box
+        st.markdown("""
+        ### Class Guide:
+        - **A**: Excellent performance
+        - **B**: Good performance
+        - **C**: Average performance
+        - **D**: Needs Improvement
+        """)
+
     except Exception as e:
-        st.error(f"Prediction Error: {e}")
-        st.warning("This often happens if the model was trained on a different version of Scikit-Learn. Please re-train and re-upload your .pkl file.")
+        st.error(f"Version Mismatch Error: {e}")
+        st.info("To fix this: Re-run your training script to generate a new .pkl file and upload it to GitHub.")
