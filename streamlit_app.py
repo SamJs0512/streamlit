@@ -123,21 +123,26 @@ st.markdown(f"""
 # ==============================
 st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
 st.markdown('<div class="glass">', unsafe_allow_html=True)
-st.markdown("### Enter Your Body Metrics")
+st.markdown("### Enter Your Body & Performance Metrics")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     age = st.slider("Age", 10, 90, 25)
+    gender = st.selectbox("Gender", ["M", "F"])
     height = st.number_input("Height (cm)", 130, 220, 170)
     weight = st.number_input("Weight (kg)", 30, 160, 70)
-    bodyfat = st.number_input("Body Fat (%)", 1.0, 50.0, 18.0)
 
 with col2:
-    gender = st.selectbox("Gender", ["M", "F"])
+    bodyfat = st.number_input("Body Fat (%)", 1.0, 50.0, 18.0)
     systolic = st.number_input("Systolic BP", 80, 200, 120)
     diastolic = st.number_input("Diastolic BP", 40, 120, 80)
-    grip = st.number_input("Grip Strength", 5, 70, 35)
+    grip = st.number_input("Grip Strength", 5, 80, 40)
+
+with col3:
+    flex = st.number_input("Sit & Bend Forward (cm)", -30.0, 50.0, 15.0)
+    situps = st.number_input("Sit-ups Count", 0, 100, 40)
+    jump = st.number_input("Broad Jump (cm)", 0, 400, 200)
 
 submit = st.button("Predict Fitness Level")
 st.markdown("</div></div>", unsafe_allow_html=True)
@@ -146,27 +151,55 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 # PREDICTION
 # ==============================
 if submit:
-    df_input = pd.DataFrame([{
-        "age": age,
-        "gender": gender,
-        "height_cm": height,
-        "weight_kg": weight,
-        "body_fat_pct": bodyfat,
-        "diastolic": diastolic,
-        "systolic": systolic,
-        "gripForce": grip
-    }])
+    try:
+        # Create dataframe using SAME column names as training
+        df_input = pd.DataFrame([{
+            "age": age,
+            "height_cm": height,
+            "weight_kg": weight,
+            "body_fat_%": bodyfat,
+            "diastolic": diastolic,
+            "systolic": systolic,
+            "gripforce": grip,
+            "sit_and_bend_forward_cm": flex,
+            "sit-ups_counts": situps,
+            "broad_jump_cm": jump,
+            "gender": gender
+        }])
 
-    df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
-    df_input = df_input.reindex(columns=feature_columns, fill_value=0)
+        # Encode gender (same as training)
+        df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
 
-    prediction = model.predict(df_input)[0]
+        # ==============================
+        # Feature Engineering (MUST MATCH TRAINING)
+        # ==============================
+        df_input["bmi"] = df_input["weight_kg"] / ((df_input["height_cm"] / 100) ** 2)
+        df_input["bp_ratio"] = df_input["systolic"] / (df_input["diastolic"] + 0.1)
+        df_input["age_grip"] = df_input["age"] * df_input["gripforce"]
+        df_input["weight_height_ratio"] = df_input["weight_kg"] / df_input["height_cm"]
+        df_input["strength_weight"] = df_input["gripforce"] / df_input["weight_kg"]
+        df_input["bodyfat_bmi"] = df_input["body_fat_%"] * df_input["bmi"]
 
-    st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
+        # Align columns EXACTLY to training model
+        df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
-    st.info("""
-    **A** – Excellent  
-    **B** – Good  
-    **C** – Average  
-    **D** – Needs Improvement
-    """)
+        # Predict
+        prediction = model.predict(df_input)[0]
+        proba = model.predict_proba(df_input)
+
+        st.success(f"🏁 Predicted Fitness Class: **{prediction}**")
+
+        st.info("""
+        **A** – Excellent  
+        **B** – Good  
+        **C** – Average  
+        **D** – Needs Improvement
+        """)
+
+        # Optional: Show probability confidence
+        st.write("### Prediction Confidence")
+        for cls, prob in zip(model.classes_, proba[0]):
+            st.write(f"{cls}: {prob:.2%}")
+
+    except Exception as e:
+        st.error(f"Prediction Error: {e}")
