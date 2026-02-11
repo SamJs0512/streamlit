@@ -55,5 +55,5 @@ bundle = {
     "model": model,
     "columns": list(X.columns)
 }
-joblib.dump(bundle, "fitness_classifier.pkl", compress=3, protocol=5)  # compress level 3
+joblib.dump(bundle, "fitness_classifier.pkl", compress=4, protocol=3)  # compress level 3
 print("✅ NEW 'fitness_classifier.pkl' saved. Should now be <25MB")
