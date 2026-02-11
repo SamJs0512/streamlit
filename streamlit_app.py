@@ -1,118 +1,242 @@
 import streamlit as st
-import pickle
-import numpy as np
+import pandas as pd
+import joblib
+import base64
+import time
 
-# --------------------------
-# PAGE CONFIG
-# --------------------------
-st.set_page_config(page_title="Fitness Class Predictor", layout="wide")
+st.set_page_config(layout="wide")
 
-# --------------------------
+# =============================
 # LOAD MODEL
-# --------------------------
-with open("fitness_classifier.pkl", "rb") as f:
-    model = pickle.load(f)
+# =============================
+bundle = joblib.load("fitness_classifier.pkl")
+model = bundle["model"]
+feature_columns = bundle["columns"]
 
-# --------------------------
-# SESSION STATE
-# --------------------------
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+# =============================
+# IMAGE ENCODER
+# =============================
+def get_base64(file):
+    with open(file, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-# --------------------------
-# GLOBAL CSS (PARALLAX + STYLE)
-# --------------------------
-st.markdown("""
+gym_bg = get_base64("assets/gym-bg.jpg")
+dumbbell = get_base64("assets/dumbbell.png")
+
+# =============================
+# ELITE CSS
+# =============================
+st.markdown(f"""
 <style>
-html {
-    scroll-behavior: smooth;
-}
 
-body {
-    margin: 0;
-    background-color: #0d1b2a;
-    color: white;
-}
+#MainMenu {{visibility:hidden;}}
+footer {{visibility:hidden;}}
 
-.hero {
-    height: 100vh;
-    background: linear-gradient(rgba(13,27,42,0.8), rgba(13,27,42,0.8)),
-                url("https://images.unsplash.com/photo-1517836357463-d25dfeac3438") center/cover fixed;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+html {{ scroll-behavior:smooth; }}
 
-.section {
-    height: 100vh;
-    background: linear-gradient(rgba(13,27,42,0.85), rgba(13,27,42,0.85)),
-                url("https://images.unsplash.com/photo-1558611848-73f7eb4001ab") center/cover fixed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-}
+.hero {{
+    height:100vh;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
+    text-align:center;
+    position:relative;
+}}
 
-h1 {
-    font-size: 60px;
-}
+.hero h1 {{
+    font-size:80px;
+    font-weight:900;
+    animation:fadeIn 2s ease-in-out;
+}}
 
-.result-section {
-    height: 100vh;
-    background: linear-gradient(rgba(13,27,42,0.9), rgba(13,27,42,0.9)),
-                url("https://images.unsplash.com/photo-1517838277536-f5f99be501cd") center/cover fixed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.hero p {{
+    font-size:24px;
+    opacity:0.9;
+}}
+
+.next-btn {{
+    margin-top:40px;
+    padding:18px 60px;
+    border-radius:50px;
+    background:white;
+    color:black;
+    font-weight:700;
+    text-decoration:none;
+    transition:0.4s;
+}}
+
+.next-btn:hover {{
+    background:#ff8c00;
+    color:white;
+    transform:scale(1.07);
+}}
+
+.dumbbell {{
+    position:absolute;
+    width:160px;
+    right:10%;
+    top:35%;
+    animation:float 5s ease-in-out infinite;
+}}
+
+@keyframes float {{
+  0% {{transform:translateY(0px);}}
+  50% {{transform:translateY(-25px);}}
+  100% {{transform:translateY(0px);}}
+}}
+
+.form-section {{
+    min-height:100vh;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.95)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}}
+
+.glass {{
+    backdrop-filter:blur(25px);
+    background:rgba(255,255,255,0.07);
+    border-radius:30px;
+    padding:60px;
+    width:65%;
+    box-shadow:0 10px 50px rgba(0,0,0,0.7);
+    color:white;
+}}
+
+.result-section {{
+    height:100vh;
+    background:
+      radial-gradient(circle at center, rgba(255,140,0,0.4), rgba(0,0,0,0.9)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
+}}
+
+.result-text {{
+    font-size:100px;
+    font-weight:900;
+    animation:fadeIn 2s ease;
+}}
+
+.sub {{
+    font-size:30px;
+    opacity:0.8;
+}}
+
+@keyframes fadeIn {{
+    from {{opacity:0;}}
+    to {{opacity:1;}}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------
-# HOME SECTION
-# --------------------------
-st.markdown('<div class="hero">', unsafe_allow_html=True)
-st.markdown("<h1>🏋️ Predict Your Fitness Class</h1>", unsafe_allow_html=True)
+# =============================
+# HERO
+# =============================
+st.markdown(f"""
+<div class="hero">
+    <img src="data:image/png;base64,{dumbbell}" class="dumbbell">
+    <h1>Predict Your Fitness Class</h1>
+    <p>AI-powered elite performance analytics</p>
 
-if st.button("Start Now"):
-    st.session_state.page = "predict"
-    st.markdown("<script>window.location.href='#predict';</script>", unsafe_allow_html=True)
+    <button class="next-btn" onclick="document.getElementById('form').scrollIntoView({{behavior: 'smooth'}});">
+        Start Now ↓
+    </button>
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+# =============================
+# FORM
+# =============================
+st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
+st.markdown('<div class="glass">', unsafe_allow_html=True)
 
-# --------------------------
-# PREDICTION SECTION
-# --------------------------
-st.markdown('<div id="predict" class="section">', unsafe_allow_html=True)
-
-st.header("Enter Your Details")
+st.markdown("### Enter Your Body Metrics")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.number_input("Age", 10, 80)
-    height = st.number_input("Height (cm)", 100, 220)
-    weight = st.number_input("Weight (kg)", 30, 150)
+    age = st.slider("Age", 10, 90, 25)
+    height = st.number_input("Height (cm)", 130, 220, 170)
+    weight = st.number_input("Weight (kg)", 30, 160, 70)
+    bodyfat = st.number_input("Body Fat (%)", 1.0, 50.0, 18.0)
 
 with col2:
-    grip = st.number_input("Grip Strength")
-    situps = st.number_input("Sit-ups Count")
-    broad_jump = st.number_input("Broad Jump (cm)")
+    gender = st.selectbox("Gender", ["M", "F"])
+    systolic = st.number_input("Systolic BP", 80, 200, 120)
+    diastolic = st.number_input("Diastolic BP", 40, 120, 80)
+    grip = st.number_input("Grip Strength", 5, 70, 35)
 
-if st.button("Predict"):
-    features = np.array([[age, height, weight, grip, situps, broad_jump]])
-    prediction = model.predict(features)
+predict = st.button("Predict Fitness Level")
 
-    st.session_state.result = prediction[0]
-    st.markdown("<script>window.location.href='#result';</script>", unsafe_allow_html=True)
+st.markdown("</div></div>", unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+# =============================
+# PREDICTION
+# =============================
+if predict:
 
-# --------------------------
-# RESULT SECTION
-# --------------------------
-if "result" in st.session_state:
-    st.markdown('<div id="result" class="result-section">', unsafe_allow_html=True)
-    st.markdown(f"<h1>Your Fitness Class: {st.session_state.result}</h1>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.spinner("AI analyzing your performance..."):
+        time.sleep(2)
+
+    df_input = pd.DataFrame([{
+        "age": age,
+        "gender": gender,
+        "height_cm": height,
+        "weight_kg": weight,
+        "body_fat_pct": bodyfat,
+        "diastolic": diastolic,
+        "systolic": systolic,
+        "gripForce": grip
+    }])
+
+    df_input = pd.get_dummies(df_input, columns=["gender"], drop_first=True)
+    df_input = df_input.reindex(columns=feature_columns, fill_value=0)
+
+    prediction = model.predict(df_input)[0]
+
+    # Auto-scroll
+    st.markdown("""
+        <script>
+        setTimeout(function(){
+            window.location.href = "#result";
+        }, 300);
+        </script>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div id="result" class="result-section">
+        <div class="result-text">CLASS {prediction}</div>
+        <div class="sub">Your Fitness Performance Tier</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Custom JS Confetti for Class A
+    if str(prediction).upper() == "A":
+        st.markdown("""
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <script>
+        confetti({
+            particleCount: 200,
+            spread: 120,
+            origin: { y: 0.6 }
+        });
+        </script>
+        """, unsafe_allow_html=True)
