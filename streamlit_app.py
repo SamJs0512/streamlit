@@ -2,18 +2,19 @@ import streamlit as st
 import pandas as pd
 import joblib
 import base64
+import time
 
 st.set_page_config(layout="wide")
 
 # =============================
-# Load model
+# LOAD MODEL
 # =============================
 bundle = joblib.load("fitness_classifier.pkl")
 model = bundle["model"]
 feature_columns = bundle["columns"]
 
 # =============================
-# Helper to encode images
+# IMAGE ENCODER
 # =============================
 def get_base64(file):
     with open(file, "rb") as f:
@@ -23,140 +24,124 @@ gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
 
 # =============================
-# PREMIUM CSS + ANIMATIONS
+# ELITE CSS
 # =============================
 st.markdown(f"""
 <style>
 
-/* Smooth scroll */
-html {{
-  scroll-behavior: smooth;
-}}
+#MainMenu {{visibility:hidden;}}
+footer {{visibility:hidden;}}
 
-/* Remove Streamlit UI */
-#MainMenu {{visibility: hidden;}}
-footer {{visibility: hidden;}}
+html {{ scroll-behavior:smooth; }}
 
-/* Global */
-section {{
-    scroll-snap-align: start;
-}}
-
-body {{
-    scroll-snap-type: y mandatory;
-}}
-
-/* HERO SECTION */
 .hero {{
-    height: 100vh;
+    height:100vh;
     background:
-        linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
-        url("data:image/jpg;base64,{gym_bg}");
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    position: relative;
-    text-align: center;
+      linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
+    text-align:center;
+    position:relative;
 }}
 
 .hero h1 {{
-    font-size: 70px;
-    animation: fadeIn 2s ease-in-out;
+    font-size:80px;
+    font-weight:900;
+    animation:fadeIn 2s ease-in-out;
 }}
 
 .hero p {{
-    font-size: 22px;
-    opacity: 0.8;
-    animation: fadeIn 3s ease-in-out;
+    font-size:24px;
+    opacity:0.9;
 }}
 
 .next-btn {{
-    padding: 15px 45px;
-    background: white;
-    color: black;
-    border-radius: 40px;
-    font-weight: bold;
-    text-decoration: none;
-    margin-top: 40px;
-    transition: 0.3s;
+    margin-top:40px;
+    padding:18px 60px;
+    border-radius:50px;
+    background:white;
+    color:black;
+    font-weight:700;
+    text-decoration:none;
+    transition:0.4s;
 }}
 
 .next-btn:hover {{
-    background: #f39c12;
-    color: white;
+    background:#ff8c00;
+    color:white;
+    transform:scale(1.07);
 }}
 
-/* Dumbbell scroll slide */
 .dumbbell {{
-    position: absolute;
-    width: 130px;
-    right: 10%;
-    top: 25%;
-    transition: transform 0.5s ease-out;
+    position:absolute;
+    width:160px;
+    right:10%;
+    top:35%;
+    animation:float 5s ease-in-out infinite;
 }}
 
-.hero:hover .dumbbell {{
-    transform: translateX(-100px) rotate(20deg);
+@keyframes float {{
+  0% {{transform:translateY(0px);}}
+  50% {{transform:translateY(-25px);}}
+  100% {{transform:translateY(0px);}}
 }}
 
-/* FORM SECTION */
 .form-section {{
-    height: 100vh;
-    background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
+    min-height:100vh;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.95)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }}
 
 .glass {{
-    backdrop-filter: blur(12px);
-    background: rgba(255,255,255,0.05);
-    border-radius: 20px;
-    padding: 40px;
-    width: 60%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    animation: fadeInUp 1.5s ease-in-out;
+    backdrop-filter:blur(25px);
+    background:rgba(255,255,255,0.07);
+    border-radius:30px;
+    padding:60px;
+    width:65%;
+    box-shadow:0 10px 50px rgba(0,0,0,0.7);
+    color:white;
 }}
 
-/* RESULT SECTION */
 .result-section {{
-    height: 100vh;
+    height:100vh;
     background:
-        linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.7)),
-        url("data:image/jpg;base64,{gym_bg}");
-    background-size: cover;
-    background-attachment: fixed;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 80px;
-    font-weight: bold;
-    animation: fadeIn 2s ease-in-out;
+      radial-gradient(circle at center, rgba(255,140,0,0.4), rgba(0,0,0,0.9)),
+      url("data:image/jpg;base64,{gym_bg}");
+    background-size:cover;
+    background-attachment:fixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
 }}
 
-/* Animations */
+.result-text {{
+    font-size:100px;
+    font-weight:900;
+    animation:fadeIn 2s ease;
+}}
+
+.sub {{
+    font-size:30px;
+    opacity:0.8;
+}}
+
 @keyframes fadeIn {{
-    from {{opacity: 0;}}
-    to {{opacity: 1;}}
-}}
-
-@keyframes fadeInUp {{
-    from {{
-        opacity: 0;
-        transform: translateY(50px);
-    }}
-    to {{
-        opacity: 1;
-        transform: translateY(0);
-    }}
+    from {{opacity:0;}}
+    to {{opacity:1;}}
 }}
 
 </style>
@@ -169,13 +154,13 @@ st.markdown(f"""
 <div class="hero">
     <img src="data:image/png;base64,{dumbbell}" class="dumbbell">
     <h1>Predict Your Fitness Class</h1>
-    <p>Scroll down and discover your true performance level</p>
+    <p>AI-powered elite performance analytics</p>
     <a href="#form" class="next-btn">Start Now ↓</a>
 </div>
 """, unsafe_allow_html=True)
 
 # =============================
-# FORM SECTION
+# FORM
 # =============================
 st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
 st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -198,13 +183,15 @@ with col2:
 
 predict = st.button("Predict Fitness Level")
 
-st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div></div>", unsafe_allow_html=True)
 
 # =============================
 # PREDICTION
 # =============================
 if predict:
+
+    with st.spinner("AI analyzing your performance..."):
+        time.sleep(2)
 
     df_input = pd.DataFrame([{
         "age": age,
@@ -222,8 +209,31 @@ if predict:
 
     prediction = model.predict(df_input)[0]
 
+    # Auto-scroll
+    st.markdown("""
+        <script>
+        setTimeout(function(){
+            window.location.href = "#result";
+        }, 300);
+        </script>
+    """, unsafe_allow_html=True)
+
     st.markdown(f"""
-    <div class="result-section">
-        🏆 CLASS {prediction}
+    <div id="result" class="result-section">
+        <div class="result-text">CLASS {prediction}</div>
+        <div class="sub">Your Fitness Performance Tier</div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Custom JS Confetti for Class A
+    if str(prediction).upper() == "A":
+        st.markdown("""
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <script>
+        confetti({
+            particleCount: 200,
+            spread: 120,
+            origin: { y: 0.6 }
+        });
+        </script>
+        """, unsafe_allow_html=True)
