@@ -1,46 +1,42 @@
-# train.py
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 
 # ===============================
 # 1. Load data
 # ===============================
 df = pd.read_csv("bodyPerformance.csv")
-df.columns = df.columns.str.strip()
 
 # ===============================
-# 2. Features
+# 2. Clean data
 # ===============================
-base_features = [
-    "age", "gender", "height_cm", "weight_kg", "body fat_%",
-    "diastolic", "systolic", "gripForce",
-    "sit and bend forward_cm", "sit-ups counts", "broad jump_cm"
+df = df.rename(columns={"body fat_%": "body_fat_pct"})
+df = df.dropna()
+
+# ===============================
+# 3. Feature selection
+# ===============================
+features = [
+    "age",
+    "gender",
+    "height_cm",
+    "weight_kg",
+    "body_fat_pct",
+    "diastolic",
+    "systolic",
+    "gripForce"
 ]
 
-X = df[base_features].copy()
+X = df[features]
 y = df["class"]
 
-# ===============================
-# 3. Encode gender
-# ===============================
-X["gender_M"] = (X["gender"] == "M").astype(int)
-X.drop(columns=["gender"], inplace=True)
+# Encode gender
+X = pd.get_dummies(X, columns=["gender"], drop_first=True)
 
 # ===============================
-# 4. Feature engineering
-# ===============================
-X["BMI"] = X["weight_kg"] / ((X["height_cm"] / 100) ** 2)
-X["BP_ratio"] = X["systolic"] / (X["diastolic"] + 0.1)
-X["age_grip"] = X["age"] * X["gripForce"]
-X["weight_height_ratio"] = X["weight_kg"] / X["height_cm"]
-X["strength_weight"] = X["gripForce"] / X["weight_kg"]
-X["bodyfat_BMI"] = X["body fat_%"] * X["BMI"]
-
-# ===============================
-# 5. Split
+# 4. Train-test split
 # ===============================
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
@@ -50,33 +46,32 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ===============================
-# 6. Train
+# 5. Train model
 # ===============================
-model = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=10,
-    random_state=42,
-    class_weight="balanced",
-    n_jobs=-1
+model = LogisticRegression(
+    max_iter=2000,
+    multi_class="multinomial"
 )
+
 model.fit(X_train, y_train)
 
 # ===============================
-# 7. Evaluate
+# 6. Evaluation
 # ===============================
 y_pred = model.predict(X_test)
-print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
 # ===============================
-# 8. Save bundle
+# 7. Save bundle
 # ===============================
-joblib.dump(
-    {
-        "model": model,
-        "columns": X.columns.tolist()
-    },
-    "fitness_classifier.pkl"
-)
+bundle = {
+    "model": model,
+    "columns": list(X.columns)
+}
 
-print("✅ Model saved")
+joblib.dump(bundle, "fitness_classifier.pkl")
+
+print("✅ Model saved successfully")
+
