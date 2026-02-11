@@ -8,6 +8,7 @@ st.set_page_config(layout="wide", page_title="Fitness AI Predictor")
 # =============================
 # LOAD MODEL
 # =============================
+# Make sure this matches the scikit-learn version used in training
 bundle = joblib.load("fitness_classifier.pkl")
 model = bundle["model"]
 feature_columns = bundle["columns"]
@@ -20,13 +21,13 @@ def get_base64(file):
         with open(file, "rb") as f:
             return base64.b64encode(f.read()).decode()
     except:
-        return ""  # fallback if image is missing
+        return ""
 
 gym_bg = get_base64("assets/gym-bg.jpg")
 dumbbell = get_base64("assets/dumbbell.png")
 
 # =============================
-# CSS STYLING (unchanged)
+# CSS STYLING
 # =============================
 st.markdown(f"""
 <style>
@@ -35,7 +36,6 @@ footer {{visibility:hidden;}}
 html {{scroll-behavior:smooth;}}
 body {{margin:0; padding:0;}}
 
-/* HERO SECTION */
 .hero {{
     height:100vh;
     background:
@@ -66,7 +66,6 @@ body {{margin:0; padding:0;}}
   100% {{transform:translateY(0px);}}
 }}
 
-/* FORM SECTION */
 .form-section {{
     min-height:100vh;
     background:
@@ -107,7 +106,7 @@ body {{margin:0; padding:0;}}
 """, unsafe_allow_html=True)
 
 # =============================
-# HERO
+# HERO SECTION
 # =============================
 st.markdown(f"""
 <div class="hero">
@@ -118,7 +117,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # =============================
-# FORM
+# FORM SECTION
 # =============================
 st.markdown('<div id="form" class="form-section">', unsafe_allow_html=True)
 st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -170,7 +169,7 @@ if submit:
         }])
 
         # Encode gender
-        df_input["gender_M"] = 1 if gender=="M" else 0
+        df_input["gender_M"] = 1 if gender == "M" else 0
         df_input = df_input.drop(columns=["gender"])
 
         # Derived features
@@ -181,7 +180,7 @@ if submit:
         df_input["strength_weight"] = df_input["gripForce"] / df_input["weight_kg"]
         df_input["bodyfat_BMI"] = df_input["body fat_%"] * df_input["BMI"]
 
-        # Align columns
+        # Align columns safely
         df_input = df_input.reindex(columns=feature_columns, fill_value=0)
 
         # Predict
